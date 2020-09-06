@@ -1,34 +1,54 @@
 package main
 
 import ("net/http"
+	"context"
+		 "time"
+		 "os/signal"
 		 "log"
-		 "fmt"
-		"io/ioutil"
+		"github.com/nicholasjackson/building-microservices-youtube/product-api/handlers"
+		"os"
 		)
 func main (){
+	l := log.New(os.Stdout, "product-api", log.LstdFlags)
+	hh := handlers.NewHello(l)
+	gh := handlers.NewGoodbye(l)
 
-	http.HandleFunc("/", func (rw http.ResponseWriter, r *http.Request){
-		//log.Println("Hello World")
-		d, err := ioutil.ReadAll(r.Body)
+	sm := http.NewServeMux()
 
+	sm.Handle("/", hh)
+	sm.Handle("/goodbye", gh)
+
+	s := &http.Server{
+		Addr : ":6060",
+		Handler: sm,
+		IdleTimeout:120*time.Second,
+		ReadTimeout:1*time.Second,
+		WriteTimeout:1*time.Second,
+	}
+
+	go func() {
+		err := s.ListenAndServe()
 		if err != nil {
-			log.Println("There is an error")
-			rw.WriteHeader(http.StatusBadRequest)
-			rw.Write([]byte("Ooops"))
-			return 
+			l.Fatal(err)
 		}
-		fmt.Fprintf(rw, "Hello %s" , d)
+	} ()
+
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, os.Interrupt)
+	signal.Notify(sigChan,os.Kill)
+
+	sig := <-sigChan
+	l.Println("Recieved terminate", sig)
 
 
+	s.ListenAndServe()
 
-		//log.Printf("Data is %s\n", d)
+	tc,cancel := context.WithTimeout(context.Background(), 30*time.Second)
 
-	})
+	defer cancel()
 
-	http.HandleFunc("/goodbye", func (http.ResponseWriter, *http.Request){
-		log.Println("Good Bye")
-	})
+	//tc, _ :=  context.WithTimeout(context.Background(), 30*time.Second)
 
-	http.ListenAndServe(":9090",nil)
+	s.Shutdown(tc)
 }
 
