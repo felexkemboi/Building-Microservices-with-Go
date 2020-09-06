@@ -19,11 +19,12 @@ func main (){
 	sm.Handle("/goodbye", gh)
 
 	s := &http.Server{
-		Addr : ":6060",
-		Handler: sm,
-		IdleTimeout:120*time.Second,
-		ReadTimeout:1*time.Second,
-		WriteTimeout:1*time.Second,
+		Addr : ":6060",                     //configure the bind address
+		Handler: sm,                        //set the default handler
+		ErrorLog : l,						// set the logger for the server
+		IdleTimeout:120*time.Second,        // 
+		ReadTimeout:5*time.Second,
+		WriteTimeout:10*time.Second,
 	}
 
 	go func() {
