@@ -3,7 +3,10 @@ package data
 import "testing"
 
 func TestCheckValidation(t *testing.T){
-	p := &Product{}
+	p := &Product{
+		Name: "Felex",
+		Price: 1.00,
+	}
 
 	err := p.Validator()
 
