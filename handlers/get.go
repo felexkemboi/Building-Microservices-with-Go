@@ -6,6 +6,11 @@ import (
 	"github.com/nicholasjackson/building-microservices-youtube/product-api/data"
 )
 
+// swagger:route:GET /products products listProducts
+// Returns a list of products
+// responses:
+//  200: productResponse
+
 // GetProducts returns the products from the data store
 func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle GET Products")
