@@ -1,3 +1,17 @@
+// Package classification of Product API
+//
+// Documentation for Product API 
+//
+// 	Schemes : http
+// 	BasePath : /
+// 	Version : 1.0.0
+//
+// 	Consumes :
+// 	- application/json
+// 
+// 	Produces :
+// 	- Application/json
+// swagger:meta
 package main
 
 import (
@@ -68,6 +82,10 @@ func main() {
 	log.Println("Got signal:", sig)
 
 	// gracefully shutdown the server, waiting max 30 seconds for current operations to complete
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	//ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+
+	ctx ,cancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+	defer cancel()
 	s.Shutdown(ctx)
 }
