@@ -19,7 +19,7 @@ type Product struct {
 	DeletedOn   string  `json:"-"`
 }
 
-//FromJSON to convert to json
+//FromJSON func
 func (p *Product) FromJSON(r io.Reader) error {
 	e := json.NewDecoder(r)
 	return e.Decode(p)
@@ -34,6 +34,9 @@ type Products []*Product
 // this reduces allocations and the overheads of the service
 //
 // https://golang.org/pkg/encoding/json/#NewEncoder
+
+
+//ToJSON func
 func (p *Products) ToJSON(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(p)
@@ -44,13 +47,13 @@ func GetProducts() Products {
 	return productList
 }
 
-//AddProduct NEW
+//AddProduct func
 func AddProduct(p *Product) {
 	p.ID = getNextID()
 	productList = append(productList, p)
 }
 
-//UpdateProduct a new product
+//UpdateProduct func
 func UpdateProduct(id int, p*Product) error {
 	_, pos, err := findProduct(id)
 	if err != nil {
@@ -64,7 +67,7 @@ func UpdateProduct(id int, p*Product) error {
 }
 
 
-//ErrProductNotFound whenever the product is not found
+//ErrProductNotFound func
 var ErrProductNotFound = fmt.Errorf("Product not found")
 
 func findProduct(id int) (*Product, int, error) {
