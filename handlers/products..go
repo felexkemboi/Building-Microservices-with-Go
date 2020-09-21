@@ -12,6 +12,27 @@ import (
 type Products struct {
 	l *log.Logger
 }
+// A list of products returns in the productsResponse
+// swagger: response productsResponse
+// type productsResponse struct {
+// 	// All products in the system
+//    	// in: body
+// 	Body []data.Product
+// }
+
+//swagger:response noContent
+type productsResponseWrapper struct{
+
+}
+//swagger:parameters  deleteProduct
+type productIDParameterWrapper struct {
+	// The id of the product to be deleted from the database 
+	// in: path
+	// required: true
+	ID int `json:"id"`
+}
+
+
 
 // NewProducts creates a products handler with the given logger
 func NewProducts(l *log.Logger) *Products {

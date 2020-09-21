@@ -1,29 +1,19 @@
-// Package classification of Product API
-//
-// Documentation for Product API 
-//
-// 	Schemes : http
-// 	BasePath : /
-// 	Version : 1.0.0
-//
-// 	Consumes :
-// 	- application/json
-// 
-// 	Produces :
-// 	- Application/json
-// swagger:meta
 package main
 
 import (
 	"context"
-	"github.com/nicholasjackson/building-microservices-youtube/product-api/handlers"
-	"github.com/nicholasjackson/env"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/go-openapi/runtime/middleware"
+
+	"github.com/gorilla/mux"
+	"github.com/nicholasjackson/building-microservices-youtube/product-api/data"
+	"github.com/nicholasjackson/building-microservices-youtube/product-api/handlers"
+	"github.com/nicholasjackson/env"
 )
 
 var bindAddress = env.String("BIND_ADDRESS", false, ":9090", "Bind address for the server")
@@ -33,23 +23,36 @@ func main() {
 	env.Parse()
 
 	l := log.New(os.Stdout, "products-api ", log.LstdFlags)
+	v := data.NewValidation()
 
 	// create the handlers
-	ph := handlers.NewProducts(l)
+	ph := handlers.NewProducts(l, v)
 
 	// create a new serve mux and register the handlers
 	sm := mux.NewRouter()
 
-	getRouter := sm.Methods(http.MethodGet).Subrouter()
-	getRouter.HandleFunc("/", ph.GetProducts)
+	// handlers for API
+	getR := sm.Methods(http.MethodGet).Subrouter()
+	getR.HandleFunc("/products", ph.ListAll)
+	getR.HandleFunc("/products/{id:[0-9]+}", ph.ListSingle)
 
-	putRouter := sm.Methods(http.MethodPut).Subrouter()
-	putRouter.HandleFunc("/{id:[0-9]+}", ph.UpdateProducts)
-	putRouter.Use(ph.MiddlewareValidateProduct)
+	putR := sm.Methods(http.MethodPut).Subrouter()
+	putR.HandleFunc("/products", ph.Update)
+	putR.Use(ph.MiddlewareValidateProduct)
 
-	postRouter := sm.Methods(http.MethodPost).Subrouter()
-	postRouter.HandleFunc("/", ph.AddProduct)
-	postRouter.Use(ph.MiddlewareValidateProduct)
+	postR := sm.Methods(http.MethodPost).Subrouter()
+	postR.HandleFunc("/products", ph.Create)
+	postR.Use(ph.MiddlewareValidateProduct)
+
+	deleteR := sm.Methods(http.MethodDelete).Subrouter()
+	deleteR.HandleFunc("/products/{id:[0-9]+}", ph.Delete)
+
+	// handler for documentation
+	opts := middleware.RedocOpts{SpecURL: "/swagger.yaml"}
+	sh := middleware.Redoc(opts, nil)
+
+	getR.Handle("/docs", sh)
+	getR.Handle("/swagger.yaml", http.FileServer(http.Dir("./")))
 
 	// create a new server
 	s := http.Server{
@@ -59,7 +62,7 @@ func main() {
 		ReadTimeout:  5 * time.Second,   // max time to read request from the client
 		WriteTimeout: 10 * time.Second,  // max time to write response to the client
 		IdleTimeout:  120 * time.Second, // max time for connections using TCP Keep-Alive
-	  }
+	}
 
 	// start the server
 	go func() {
@@ -82,10 +85,6 @@ func main() {
 	log.Println("Got signal:", sig)
 
 	// gracefully shutdown the server, waiting max 30 seconds for current operations to complete
-	//ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
-
-	ctx ,cancel := context.WithTimeout(context.Background(), 30*time.Second)
-
-	defer cancel()
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 	s.Shutdown(ctx)
 }
